@@ -12,17 +12,9 @@ gateway_ip = "192.168.1.1"
 # K3s picking up the wrong interface when starting server and agent
 # https://github.com/alexellis/k3sup/issues/306
 
-server_script = <<-SHELL
+server_static_ip_script = <<-SHELL
     sudo -i
     apk add curl
-    #export INSTALL_K3S_EXEC="--bind-address=#{server_ip} --node-external-ip=#{server_ip} --flannel-iface=eth0"
-    #curl -sfL https://get.k3s.io | sh -
-    curl -sfL https://get.k3s.io | K3S_TOKEN=SECRET sh -s - server --cluster-init
-    echo "Sleeping for 5 seconds to wait for k3s to start"
-    sleep 5
-    cp /var/lib/rancher/k3s/server/token /vagrant_shared
-    cp /etc/rancher/k3s/k3s.yaml /vagrant_shared
-    
     echo "auto lo" > /etc/network/interfaces
     echo "iface lo inet loopback" >> /etc/network/interfaces
     echo " " >> /etc/network/interfaces
@@ -32,10 +24,18 @@ server_script = <<-SHELL
     echo "  gateway #{gateway_ip}" >> /etc/network/interfaces
     echo "  hostname server-#{server_ip}" >> /etc/network/interfaces
     /etc/init.d/network restart
-
+    reboot
     SHELL
 
-
+    server_init_k3s_script = <<-SHELL
+    sudo -i
+    curl -sfL https://get.k3s.io | K3S_TOKEN=SECRET sh -s - server --cluster-init
+    echo "Sleeping for 5 seconds to wait for k3s to start"
+    sleep 5
+    cp /var/lib/rancher/k3s/server/token /vagrant_shared
+    cp /etc/rancher/k3s/k3s.yaml /vagrant_shared
+    
+    SHELL
 
 Vagrant.configure("2") do |config|
   config.vm.box = "generic/alpine314"
@@ -52,7 +52,10 @@ Vagrant.configure("2") do |config|
       vb.memory = "2048"
       vb.cpus = "2"
     end
-    server.vm.provision "shell", inline: server_script
+    server.vm.provision "shell", inline: server_static_ip_script
+    #server.vm.provision :unix_reboot
+    server.vm.provision "shell", inline: server_init_k3s_script
+
   end
 
   agents.each do |agent_name, agent_ip|
@@ -67,13 +70,8 @@ Vagrant.configure("2") do |config|
         vb.memory = "2048"
         vb.cpus = "2"
       end
-      agent_script = <<-SHELL
+      agent_static_ip_script = <<-SHELL
     sudo -i
-    apk add curl
-    #curl -sfL https://get.k3s.io | sh -
-
-    curl -sfL https://get.k3s.io | K3S_TOKEN=SECRET sh -s - server --server https://#{server_ip}:6443
-
     echo "auto lo" > /etc/network/interfaces
     echo "iface lo inet loopback" >> /etc/network/interfaces
     echo " " >> /etc/network/interfaces
@@ -83,9 +81,18 @@ Vagrant.configure("2") do |config|
     echo "  gateway #{gateway_ip}" >> /etc/network/interfaces
     echo "  hostname server-#{agent_ip}" >> /etc/network/interfaces
     /etc/init.d/network restart
-    
+    reboot
     SHELL
-      agent.vm.provision "shell", inline: agent_script
+
+    agent_k3s_init_script = <<-SHELL
+    apk add curl
+    curl -sfL https://get.k3s.io | K3S_TOKEN=SECRET sh -s - server --server https://#{server_ip}:6443
+
+    SHELL
+
+      agent.vm.provision "shell", inline: agent_static_ip_script
+      #agent.vm.provision :unix_reboot
+      agent.vm.provision "shell", inline: agent_k3s_init_script
     end
   end
 end

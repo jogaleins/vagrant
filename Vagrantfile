@@ -1,83 +1,62 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# All Vagrant configuration is done below. The "2" in Vagrant.configure
-# configures the configuration version (we support older styles for
-# backwards compatibility). Please don't change it unless you know what
-# you're doing.
+server_ip = "192.168.33.10"
+agents = { "agent1" => "192.168.33.11"}
+#agents = { "agent1" => "192.168.33.11",
+#           "agent2" => "192.168.33.12",
+#           "agent3" => "192.168.33.13" }
+
+# Extra parameters in INSTALL_K3S_EXEC variable because of
+# K3s picking up the wrong interface when starting server and agent
+# https://github.com/alexellis/k3sup/issues/306
+
+server_script = <<-SHELL
+    sudo -i
+    apk add curl
+    export INSTALL_K3S_EXEC="--bind-address=#{server_ip} --node-external-ip=#{server_ip} --flannel-iface=eth0"
+    curl -sfL https://get.k3s.io | sh -
+    echo "Sleeping for 5 seconds to wait for k3s to start"
+    sleep 5
+    cp /var/lib/rancher/k3s/server/token /vagrant_shared
+    cp /etc/rancher/k3s/k3s.yaml /vagrant_shared
+    SHELL
+
+agent_script = <<-SHELL
+    sudo -i
+    apk add curl
+    export K3S_TOKEN_FILE=/vagrant_shared/token
+    export K3S_URL=https://#{server_ip}:6443
+    export INSTALL_K3S_EXEC="--flannel-iface=eth1"
+    curl -sfL https://get.k3s.io | sh -
+    SHELL
+
 Vagrant.configure("2") do |config|
-  # The most common configuration options are documented and commented below.
-  # For a complete reference, please see the online documentation at
-  # https://docs.vagrantup.com.
- 
-  # Every Vagrant development environment requires a box. You can search for
-  # boxes at https://vagrantcloud.com/search.
-  config.vm.box = "generic/alpine315"
+  config.vm.box = "generic/alpine314"
 
-  # Disable automatic box update checking. If you disable this, then
-  # boxes will only be checked for updates when the user runs
-  # `vagrant box outdated`. This is not recommended.
-  # config.vm.box_check_update = false
-
-  # Create a forwarded port mapping which allows access to a specific port
-  # within the machine from a port on the host machine. In the example below,
-  # accessing "localhost:8080" will access port 80 on the guest machine.
-  # NOTE: This will enable public access to the opened port
-  # config.vm.network "forwarded_port", guest: 80, host: 8080
-
-  # Create a forwarded port mapping which allows access to a specific port
-  # within the machine from a port on the host machine and only allow access
-  # via 127.0.0.1 to disable public access
-  # config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
-
-  # Create a private network, which allows host-only access to the machine
-  # using a specific IP.
-  # config.vm.network "private_network", ip: "192.168.33.10"
-
-  # Create a public network, which generally matched to bridged network.
-  # Bridged networks make the machine appear as another physical device on
-  # your network.
-  #
-  #config.vm.network "private_network", bridge: "vmbr1", ip: "192.168.1.10"
-  config.vm.network 'private_network', bridge: "vmbr1", ip: "192.168.1.10", subnet: "#192.168.1.0/24"
-  # Share an additional folder to the guest VM. The first argument is
-  # the path on the host to the actual folder. The second argument is
-  # the path on the guest to mount the folder. And the optional third
-  # argument is a set of non-required options.
-  # config.vm.synced_folder "../data", "/vagrant_data"
-  config.vm.synced_folder ".", "/vagrant", disabled: true
-  config.vm.provider "hyperv"
-  config.vm.provider "hyperv" do |h|
-    h.enable_virtualization_extensions = true
-    h.linked_clone = true
-     
+  config.vm.define "server", primary: true do |server|
+    server.vm.network "private_network", ip: server_ip
+    server.vm.synced_folder "./shared", "/vagrant_shared"
+    server.vm.hostname = "server"
+    server.vm.enable_virtualization_extensions = true
+    server.vm.provider "hyperv" do |vb|
+      vb.memory = "2048"
+      vb.cpus = "2"
+    end
+    server.vm.provision "shell", inline: server_script
   end
-  # Provider-specific configuration so you can fine-tune various
-  # backing providers for Vagrant. These expose provider-specific options.
-  # Example for VirtualBox:
-  #
-  # config.vm.provider "virtualbox" do |vb|
-  #   # Display the VirtualBox GUI when booting the machine
-  #   vb.gui = true
-  #
-  #   # Customize the amount of memory on the VM:
-  #   vb.memory = "1024"
-  # end
-  #
-  # View the documentation for the provider you are using for more
-  # information on available options.
 
-  # Enable provisioning with a shell script. Additional provisioners such as
-  # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
-  # documentation for more information about their specific syntax and use.
-  # config.vm.provision "shell", inline: <<-SHELL
-  #   apt-get update
-  #   apt-get install -y apache2
-  # SHELL
-  config.vm.provision "shell", inline: <<-SHELL
-    apk update
-    apk add curl wget wireguard-tools cloud-init 
-
-  SHELL
+  agents.each do |agent_name, agent_ip|
+    config.vm.define agent_name do |agent|
+      agent.vm.network "private_network", ip: agent_ip
+      agent.vm.synced_folder "./shared", "/vagrant_shared"
+      agent.vm.enable_virtualization_extensions = true
+      agent.vm.hostname = agent_name
+      agent.vm.provider "hyperv" do |vb|
+        vb.memory = "2048"
+        vb.cpus = "2"
+      end
+      agent.vm.provision "shell", inline: agent_script
+    end
+  end
 end
-

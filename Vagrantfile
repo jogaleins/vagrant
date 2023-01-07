@@ -31,8 +31,8 @@ server_static_ip_script = <<-SHELL
     sudo -i
     sleep 5
     curl -sfL https://get.k3s.io | K3S_TOKEN=SECRET sh -s - server --cluster-init --flannel-iface=eth1 --disable traefik --disable servicelb
-    echo "Sleeping for 5 seconds to wait for k3s to start"
-    sleep 10
+    echo "Sleeping for 60 seconds to wait for k3s to start"
+    sleep 60
     cp /var/lib/rancher/k3s/server/token /vagrant_shared
     cp /etc/rancher/k3s/k3s.yaml /vagrant_shared
     

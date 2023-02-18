@@ -100,3 +100,5 @@ Vagrant.configure("2") do |config|
     end
   end
 end
+
+system('vagrant ssh server -c \'sudo cat /etc/rancher/k3s/k3s.yaml\' > k3s.yaml')

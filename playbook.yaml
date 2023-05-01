@@ -1,0 +1,13 @@
+---
+- hosts: vagranthosts
+  gather_facts: true
+  become: yes
+  remote_user: vagrant 
+  tasks:
+    - name: install packages
+      command: /sbin/apk add unzip curl wget wireguard-tools
+      
+    - name: Update repositories and install foo and bar packages
+      community.general.apk:
+        name: wget,curl
+        update_cache: true

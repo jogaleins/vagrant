@@ -33,7 +33,8 @@ server_static_ip_script = <<-SHELL
     server_init_k3s_script = <<-SHELL
     sudo -i
     sleep 5
-    curl -sfL https://get.k3s.io | K3S_TOKEN=SECRET sh -s - server --cluster-init --flannel-iface=eth1 --disable traefik --disable servicelb
+    #curl -sfL https://get.k3s.io | K3S_TOKEN=SECRET sh -s - server --cluster-init --flannel-iface=eth1 --disable traefik --disable servicelb
+    curl -sfL https://get.k3s.io | K3S_TOKEN=SECRET sh -s - server --cluster-init --flannel-iface=eth1 --disable servicelb
     echo "Sleeping for 60 seconds to wait for k3s to start"
     sleep 60
     cp /var/lib/rancher/k3s/server/token /vagrant_shared
@@ -97,7 +98,8 @@ Vagrant.configure("2") do |config|
     agent_k3s_init_script = <<-SHELL
     sleep 5
     apk add curl
-    curl -sfL https://get.k3s.io | K3S_TOKEN=SECRET sh -s - server --server https://#{server_ip}:6443 --flannel-iface=eth1 --disable traefik --disable servicelb
+    #curl -sfL https://get.k3s.io | K3S_TOKEN=SECRET sh -s - server --server https://#{server_ip}:6443 --flannel-iface=eth1 --disable traefik --disable servicelb
+    curl -sfL https://get.k3s.io | K3S_TOKEN=SECRET sh -s - server --server https://#{server_ip}:6443 --flannel-iface=eth1 --disable servicelb
     apk update
     apk add ansible
 	echo #{pub_key} >> /home/vagrant/.ssh/authorized_keys

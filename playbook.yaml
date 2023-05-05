@@ -11,3 +11,6 @@
       community.general.apk:
         name: wget,curl
         update_cache: true
+        
+    - name: mount shared root FS 
+      command: mount --make-shared /

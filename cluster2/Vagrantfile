@@ -4,11 +4,11 @@
 
 
 
-server_ip = "192.168.56.10"
+server_ip = "192.168.66.10"
 #agents = { "agent1" => "192.168.56.11"}
-gateway_ip = "192.168.56.1"
-agents = { "agent1" => "192.168.56.11",
-           "agent2" => "192.168.56.12"}
+gateway_ip = "192.168.66.1"
+agents = { "agent1" => "192.168.66.11",
+           "agent2" => "192.168.66.12"}
  #          "agent3" => "192.168.33.13" }
 pub_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC/24BOV/aVABP7fPx0jeFNHu+tdKqRIMn/9uTaSx3I/MKcDIRs4LGWgKENI5z9Oc7gQFP8O6ISVXYaOeAOs03uUKQr8w6NwPg1Af+YZT8rFssJ021dK/9bLL2iwgUGZjd2Z8IVh7SnCrABYZf6vLGJ5ooekIVsc4f6d6QISHszlL0DTLGu9oqMxDO2WfYoCNNUD33yGIytJuqEHvwgg9zfVr7ZFXaLeZmONfuwi6vCLGwlOSI29rHc8p7KdMrCi3uexc48KBG5svobUCCB9j0KV3yNA67uZYeuALt5C0ufzzVCNuIlyWk15mYwESolPDcuHwIqj/8tMppRlKNMkBsjeitvGx+5vjCYEj0ArIx5jCFdLff9Rdm8IYdPxxi715YdbumY1I0yoyaCxV/BXukFfUEQdgEqISKeHpUBhXW72m/auEYbQyyWKLQJr1xkY+nCRAECix6JD/yWLDlcLm27dkxi9m9pLuoN92BqDVyYjKFfgojnq+Egqpguq9Uhtek= ap@DESKTOP-7D83P4I"
 # Extra parameters in INSTALL_K3S_EXEC variable because of

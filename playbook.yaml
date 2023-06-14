@@ -5,7 +5,7 @@
   remote_user: vagrant 
   tasks:
     - name: install packages
-      command: /sbin/apk add unzip curl wget wireguard-tools
+      command: /sbin/apk add unzip curl wget wireguard-tools open-iscsi
       
     - name: Update repositories and install wget and curl packages
       community.general.apk:
@@ -14,7 +14,19 @@
         
     - name: mount shared root FS 
       command: mount --make-shared /
+     
+    - name: Create start file make-shared-root.start
+      copy:
+        dest: /etc/local.d/make-shared-root.start
+        content: |
+          mount --make-shared /
+          mount --make-shared /vagrant_shared
 
+    - name: Enable local.d on startup
+      command: rc-update add local default 
+    
+    - name: start local.d 
+      command: rc-service local start
 
 - hosts: master
   become: yes

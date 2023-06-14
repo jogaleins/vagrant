@@ -58,3 +58,6 @@
 
     - debug:
         var: command_output.stdout_lines
+
+    - name: Install longhorn
+      command: /usr/local/bin/kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.4.2/deploy/longhorn.yaml
